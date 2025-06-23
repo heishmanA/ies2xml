@@ -8,7 +8,7 @@ from xml.etree.ElementTree import Element, SubElement, ElementTree, tostring
 from xml.dom.minidom import parseString
 
 parser = argparse.ArgumentParser(
-    description = 'An .ies file to tsv converter'
+    description = 'An .ies file to xml converter'
     )
 subparser = parser.add_subparsers(
     help = 'subcommand help',
