@@ -58,7 +58,7 @@ def convert_to_ies(file: Path, dest=None):
     pass
 
 def batch_convert_to_ies(directory: Path):
-    """Converts all files within the given directory to convert all .ies files into .xml files
+    """Converts all xml files within the given directory to .ies files
 
     Args:
         directory (Path): The directory containing the .xml files
@@ -69,6 +69,7 @@ def batch_convert_to_ies(directory: Path):
     
     for xml_file in directory.glob('*.xml'):
         try:
+            # Next update will include a specific batch folder
             convert_to_ies(xml_file)
         except Exception as e:
             print(f"""Exception caught: {e}' Skipping {xml_file}""")
