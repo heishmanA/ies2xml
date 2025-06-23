@@ -10,3 +10,8 @@ venv
 *.ies
 *.csv
 *.tsv
+
+#input and output folders
+/xml
+/ies
+/out

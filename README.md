@@ -1,75 +1,14 @@
-# ies2csv
+# ies2xml 
 
 ## Overview
 
-`ies2csv` is a utility meant to convert the `.ies` files found within `.ipf` files used by [Tree of Savior][tos] to a readable tab-separated file. `csv` is a misnomer because I discovered some fields in the `.ies` actually have commas, affecting the output from the original `csv` format.
+`ies2xml` is a fork of  `ies2csv` utility created by `dark-nova` [github](https://github.com/dark-nova/ies2csv). Please refer to the IES2TSVCHANGELOG.md and IES2TSVREADME.md to see their own work
 
-This `ies2csv` is a fork of the [original utility](https://github.com/Doddler/ies2csv), written in C# by [**Doddler**](https://github.com/Doddler). As practice for myself, I re-implemented the code in Python, specifically Python 3.5+.
+I modified this code with the intention of batch converting Tree Of Savior's .ies files to .xml files
 
-Each resulting `.tsv` file has a structure like so:
-- `ncols_int`: number of numeric/integer fields, like `ClassID` (ID) and `NeedCount` (flag)
-- `ncols_str`: the rest of the fields, usually strings
-- i.e. `ncols = ncols_int + ncols_str`
+Future update will include batch conversion of .xml files back to .ies files
 
 ## Usage
 
 ### Main
-```
-$ python ies2csv.py -h
-usage: ies2csv.py [-h] {file,batch} ...
-
-An .ies file to tsv converter
-
-positional arguments:
-  {file,batch}  subcommand help
-    file        file help
-    batch       batch help
-
-optional arguments:
-  -h, --help    show this help message and exit
-```
-
-### File-based operations
-```
-$ python ies2csv.py file -h
-usage: ies2csv.py file [-h] [--output OUTPUT] ies_file
-
-positional arguments:
-  ies_file              The .ies file to convert
-
-optional arguments:
-  -h, --help            show this help message and exit
-  --output OUTPUT, -o OUTPUT
-                        An optional file to output to; overrides default file
-                        name
-```
-
-⚠ Default behavior creates a `.tsv` file with the same 'stem' name.
-
-If `OUTPUT` is specified, the tsv contents will be written to `OUTPUT`.
-
-### Batch operations
-```
-$ python ies2csv.py batch -h
-usage: ies2csv.py batch [-h] directory
-
-positional arguments:
-  directory   The directory with .ies files to batch convert
-
-optional arguments:
-  -h, --help  show this help message and exit
-```
-
-⚠ In batch mode, manual output is disabled.
-
-## Requirements
-
-This code is designed around the following:
-
-- Python 3.5+
-
-## Disclaimer
-
-This project is not affiliated with or endorsed by [Tree of Savior][tos]. See [`LICENSE`](LICENSE) for more detail.
-
-[tos]: https://treeofsavior.com/
+To be updated
