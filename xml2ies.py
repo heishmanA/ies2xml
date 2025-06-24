@@ -1,8 +1,9 @@
 import argparse
 import os
 from pathlib import Path
-import glob
+from xmltools import XMLTools
 
+xml_reader = XMLTools()
 parser = argparse.ArgumentParser(
     description = 'An .xml to .ies converter'
 )
@@ -53,9 +54,18 @@ def verify_is_dir(dir: Path) -> bool:
     """
     return os.path.isdir(dir)
 
-def convert_to_ies(file: Path, dest=None):
-    print(f'Converting {file.name} to .ies')
-    pass
+def convert_to_ies(file: Path, dest: Path|None = None):
+    """Converts a single xml file to ies format
+
+    Args:
+        file (Path): the file to convert
+        dest (Path|None, optional): The destination path for the file to be placed. Defaults to None.
+    """
+    file_name = file.name[0: len(file.name) - 4]
+    print(f'Converting {file.name} to {file_name}.ies')
+    xml_reader.load_xml(file)
+    xml_reader.load_xml_columns()
+    xml_reader.load_xml_rows()
 
 def batch_convert_to_ies(directory: Path):
     """Converts all xml files within the given directory to .ies files

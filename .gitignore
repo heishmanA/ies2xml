@@ -2,7 +2,7 @@
 *.sublime-*
 
 # Python files
-venv
+.venv
 *__pycache__/*
 *.pyc
 
@@ -11,7 +11,10 @@ venv
 *.csv
 *.tsv
 
+# vscode folders and files
+.vscode
+
 #input and output folders
-/xml
-/ies
+/xml_files
+/ies_files
 /out
