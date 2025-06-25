@@ -3,7 +3,7 @@ import os
 from pathlib import Path
 from xmltools import XMLTools
 
-xml_reader = XMLTools()
+xml_tool = XMLTools()
 parser = argparse.ArgumentParser(
     description = 'An .xml to .ies converter'
 )
@@ -63,9 +63,12 @@ def convert_to_ies(file: Path, dest: Path|None = None):
     """
     file_name = file.name[0: len(file.name) - 4]
     print(f'Converting {file.name} to {file_name}.ies')
-    xml_reader.load_xml(file)
-    xml_reader.load_xml_columns()
-    xml_reader.load_xml_rows()
+    xml_tool.load_xml(file)
+    xml_tool.load_xml_columns()
+    xml_tool.load_xml_rows()
+    # test
+    location = os.path.realpath(os.path.join(os.getcwd(), "out"))
+    xml_tool.create_ies(location)
 
 def batch_convert_to_ies(directory: Path):
     """Converts all xml files within the given directory to .ies files

@@ -1,5 +1,9 @@
 import xml.etree.ElementTree as ET
+import numpy as np
 import struct
+import os
+import io
+from ies_tools.binarywriter import BinaryWriterTools
 from pathlib import Path
 from ies_tools.columntype import ColumnType as CT
 from ies_tools.iesheader import IesHeader
@@ -8,7 +12,8 @@ from ies_tools.iescolumn import IesColumn
 from ies_tools.propertyaccess import PropertyAccess as PA
 
 class XMLTools:
-    """Tools to make reading XML and creating an object that will contain column and row information
+    """
+        A tool for reading the ies xml data and converting that information back into .ies format
     """
     
     # Unused variables will be removed
@@ -21,10 +26,8 @@ class XMLTools:
     __CLASS_NAME: str = "ClassName"
     __ID_SPACE_NAME:str = "id"
     __KEY_SPACE_NAME:str = "keyid"
-    __VERSION:str = "Version"
-    __USE_CLASS_ID:str = "UseClassId"
-    __DECLARATION_INDEX:str = "DeclarationIndex"
     
+    # Just an easy way to access the different property enum types because I'm lazy
     __PROPERTY_ACCESS_DICT = {
          "EP_": PA.EP,
          "CP_": PA.CP,
@@ -32,12 +35,26 @@ class XMLTools:
          "CT_": PA.CT,
     }
     
+    # Each of the following functions were made to
+    # simulate the type conversion used in the original C# code
+    # each flag represents the respective data type
+    def __get_ushort__(self, val):
+        return struct.pack('<H', val)
+    def __get_short__(self, val):
+        return struct.pack('h', val)
+    def __get_int__(self, val):
+        return struct.pack('<i', val)
+    def __get_uint_32__(self, val):
+        return struct.pack('<I', val)
+    def __get_uint_8__(self, val):
+        return struct.pack('Q', val)
+    def __get_float__(self, val):
+        return struct.pack('<f', val)
+    
     def __init__(self):
         self.__header_name_length: int = 0x40
         self.__column_size: int = 136
         self.__size_position: int = (2 * self.__header_name_length + 2 * struct.calcsize('h')) # h = format code for short
-        self.__default_string: str = "None"
-        self.__default_num: float = 0.0
         self.header = IesHeader()
         self.columns: list[IesColumn] = []
         self.rows: list[IesRow] = []
@@ -63,13 +80,21 @@ class XMLTools:
         
     
     def load_xml(self, file: Path):
+        """ Loads the xml file information
+
+        Args:
+            file (Path): The file path containing the xml file to load
+        """
+        
         if not file.name.endswith(".xml"):
-            print(f'Incorrect file type passed to read_xml(self, file) {file.name}')
+            print(f'Incorrect file type passed to read_xml(self, file) {file.name} - Skipping this file')
             return None
         self.tree = ET.parse(file)
         self.file_name = file.name
     
     def load_xml_rows(self):
+        """ Loads the IES row information from the xml file
+        """
         self.rows.clear()
         # Yes, this is duplicate code. I'll need to figure out why I was getting an error so I can reduce this
         class_elements: list[ET.Element[str]] = []
@@ -78,6 +103,9 @@ class XMLTools:
             return
 
         root = self.tree.getroot()
+        if root.tag != self.__ROOT_NAME:
+            print(f'{root.tag} does not match {self.__ROOT_NAME} - Skipping this file')
+            return
         category = root.find(self.__CATEGORY_ELEMENT)
         class_elements: list[ET.Element[str]] = []
         
@@ -139,6 +167,10 @@ class XMLTools:
             print(f'{self.file_name} missing id')
             return None
         self.header.key_space =  root.get(self.__KEY_SPACE_NAME) if root.get(self.__KEY_SPACE_NAME) else None
+        self.header.column_count = 0
+        self.header.row_count = 0
+        self.header.number_of_column_count = 0
+        self.header.number_of_str_column_count = 0
         
         # Check to verify if Category exists in the xml or not
         # Need to verify this so we know where the children of idspace exist
@@ -176,22 +208,26 @@ class XMLTools:
                 if any(col.name == property_name for col in self.columns):
                     continue
                 # name_length was never used in the original implementation so it has been removed
-                name: str = property_name
+                simple_name: str = property_name
                 access = PA.SP
                 sync: bool  = False
                 # Getting the first 3 characters of the name
                 # This is just a better way than writing tons of if statements
                 
-                property_access_key = name[0:3]
+                property_access_key = simple_name[0:3]
                 if property_access_key in self.__PROPERTY_ACCESS_DICT:
                     access = self.__PROPERTY_ACCESS_DICT[property_access_key]
-                    name = property_access_key
+                    simple_name = property_access_key
                 
                 if self.__NT in property_name:      
                     sync = True
-                    name = name[0: name.index(self.__NT)]
+                    simple_name = simple_name[0: simple_name.index(self.__NT)]
+                
+                if property_name not in column_types:
+                    type = CT.str
                 
                 column = IesColumn()
+                column.column = simple_name # almost forgot  this bad boy
                 column.name = property_name
                 column.column_type = column_types[property_name] if property_name in column_types else CT.str
                 column.property_access = access
@@ -205,8 +241,103 @@ class XMLTools:
             self.header.column_count = len(self.columns)
             self.header.number_of_column_count = sum(column.isNumber() for column in self.columns)
             self.header.number_of_str_column_count = self.header.column_count - self.header.number_of_column_count
-
-
+    
         
         
+    def create_ies(self, directory: str):
+        columns = self.columns
+        # This simulates the C# LINQ sort from the original C# implementation
+        # First sort the columns by whether they are a number, then by their declaration index
+        sorted_columns = sorted(columns, key=lambda column: (0 if column.isNumber() else 1, column.declaration_index))     
+        rows = self.rows
+        row_count = len(rows)
+        column_count = len(columns)
+        number_of_column_count = sum(column.isNumber() for column in columns)
+        string_column_count = column_count - number_of_column_count
+        
+        filename = self.file_name[0: self.file_name.index('.xml')] + ".ies"
+        full_path = os.path.join(directory, filename)
+        idspace = self.header.id_space
+        # used for padding
+        null_padding_short = self.__get_ushort__(0)
+        
+        if idspace == None or len(idspace) == 0:
+            # id space should not be missing
+            print(f'Error writing to {filename} - Missing idspace. Verify the idspace exists or has been converted correctly before trying again')
+            return
+        
+        with open(full_path, 'wb+') as raw_f:
+            # Pylance will say this is an error, but will run fine at runtime (i hope)
+            buffer = io.BufferedRandom(raw_f) # type: ignore
+            bwt = BinaryWriterTools(buffer)
+            bwt.write_fixed_string(idspace, self.__header_name_length)
+            
+            # According to what I was told the keyspace is deleted and not needed so skipping it
+            
+            buffer.write(self.__get_ushort__(self.header.Version))
+            buffer.write(null_padding_short)
+            buffer.write(self.__get_uint_32__(self.header.info_size))
+            buffer.write(self.__get_uint_32__(self.header.data_size))
+            buffer.write(self.__get_uint_32__(self.header.total_size))
+            buffer.write(self.__get_uint_8__(1)  if self.header.use_class_id == True else self.__get_uint_8__(0))
+            buffer.write(null_padding_short)
+            buffer.write(self.__get_ushort__(row_count))
+            buffer.write(self.__get_ushort__(column_count))
+            buffer.write(self.__get_ushort__(number_of_column_count))
+            buffer.write(self.__get_ushort__(string_column_count))
+            buffer.write(null_padding_short)
+            
+            print("Note to self - check to make sure column name is correctly obtained. NOTE THAT LOADINFOFROMINFOXML IS NOT VALID IN THIS CASE")
+            for c in columns:
+                # From what I've seen this 'column' property doesn't exist in the ies files I have, but just in case
+                if len(c.column) > 0:
+                    bwt.write_xored_fixed_string(c.column, self.__header_name_length)
+                    bwt.write_xored_fixed_string(c.name, self.__header_name_length)
+                    buffer.write(self.__get_ushort__(c.column_type.name))
+                    buffer.write(self.__get_ushort__(c.property_access.name))
+                    buffer.write(self.__get_ushort__(c.sync))
+                    buffer.write(self.__get_ushort__(c.declaration_index))
+            # end loop
+            
+            rows_start = buffer.tell()
+            
+            for row in rows:
+                buffer.write(self.__get_int__(row.class_id))
+                bwt.write_xor_lp_str(row.class_name)
+                
+                for c in sorted_columns:
+                    ies_row = row.get(c.name)
                     
+                    if ies_row == None:
+                        if c.isNumber():
+                            buffer.write(self.__get_float__(0))
+                        else:
+                            buffer.write(self.__get_ushort__(0))
+                    else:
+                        if c.isNumber():
+                            buffer.write(self.__get_float__(float(ies_row))) # type: ignore
+                        else:
+                            bwt.write_xor_lp_str(str(ies_row))
+                # end sorted loop
+                # Iterating over all the columns where the column is not a number
+                for c in [c for c in sorted_columns if c.isNumber() == False]:
+                    val = row.user_scr_dict.get(c.name)
+                    # Writes the unisgned int for True 
+                    # if the key exists in dictionary and its value is true
+                    # else
+                    # Writes the unsigned int for False 
+                    # if the key exists in the dictionary and its values is false 
+                    # or the key does not exist in the dictionary
+                    buffer.write(self.__get_uint_8__(1) if val is True else self.__get_uint_8__(0))
+                # end loop
+            # end loop
+            self.header.info_size = column_count * self.__column_size
+            self.header.data_size = buffer.tell() - rows_start
+            self.header.total_size = buffer.tell()
+            
+            buffer.seek(self.__size_position)
+            buffer.write(self.__get_uint_32__(self.header.info_size))
+            buffer.write(self.__get_uint_32__(self.header.data_size))
+            buffer.write(self.__get_uint_32__(self.header.total_size))
+            buffer.flush()
+            buffer.seek(0, io.SEEK_END)

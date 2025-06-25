@@ -4,7 +4,7 @@ class IesColumn:
     """A class to represent a column in an IES file
     """
     def __init__(self):
-        self.column = None
+        self.column: str = ""
         self.name: str = ""
         self.column_type: CT = CT.str
         self.property_access: PA = PA.CP
