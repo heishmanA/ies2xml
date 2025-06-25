@@ -287,16 +287,13 @@ class XMLTools:
             buffer.write(self.__get_ushort__(string_column_count))
             buffer.write(null_padding_short)
             
-            print("Note to self - check to make sure column name is correctly obtained. NOTE THAT LOADINFOFROMINFOXML IS NOT VALID IN THIS CASE")
             for c in columns:
-                # From what I've seen this 'column' property doesn't exist in the ies files I have, but just in case
-                if len(c.column) > 0:
-                    bwt.write_xored_fixed_string(c.column, self.__header_name_length)
-                    bwt.write_xored_fixed_string(c.name, self.__header_name_length)
-                    buffer.write(self.__get_ushort__(c.column_type.name))
-                    buffer.write(self.__get_ushort__(c.property_access.name))
-                    buffer.write(self.__get_ushort__(c.sync))
-                    buffer.write(self.__get_ushort__(c.declaration_index))
+                bwt.write_xored_fixed_string(c.column, self.__header_name_length)
+                bwt.write_xored_fixed_string(c.name, self.__header_name_length)
+                buffer.write(self.__get_ushort__(c.column_type.name))
+                buffer.write(self.__get_ushort__(c.property_access.name))
+                buffer.write(self.__get_ushort__(c.sync))
+                buffer.write(self.__get_ushort__(c.declaration_index))
             # end loop
             
             rows_start = buffer.tell()
