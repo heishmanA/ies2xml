@@ -18,7 +18,7 @@ class BinaryWriterTools:
         Returns:
             bytes: the encoded string using utf-8 encoding 
         """
-        return value.encode('utf-8')
+        return value.encode('utf-8', errors='replace')
     
     def __compare_write_length___(self, encoded_bytes: bytes, length: int) -> int:
         """ Compares the write lengths and returns the proper length for the buffer to write
@@ -51,12 +51,12 @@ class BinaryWriterTools:
         Returns:
             bytearray: The array containing the XOR'd results of the buffer
         """
-        r = bytearray()
-        for i in range(len(buffer)):
-            if buffer[i] == 0:
+        result = bytearray()
+        for b in buffer:
+            if b == 0:
                 break
-            buffer[i] ^= self.__XOR_KEY
-        return r
+            result.append(b ^ self.__XOR_KEY)
+        return result
     
     def write_xor_lp_str(self, output: str):
         """ Writes the XOR'd output to buffer as a UTF-8 string with a prefixed length

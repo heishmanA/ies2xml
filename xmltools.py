@@ -22,7 +22,7 @@ class XMLTools:
     __ROOT_NAME = "idspace"
     __CATEGORY_ELEMENT:str = "Category"
     __CLASS_ELEMENT:str = "Class"
-    __CLASS_ID: str = "ClassId"
+    __CLASS_ID: str = "ClassID"
     __CLASS_NAME: str = "ClassName"
     __ID_SPACE_NAME:str = "id"
     __KEY_SPACE_NAME:str = "keyid"
@@ -54,7 +54,7 @@ class XMLTools:
     def __init__(self):
         self.__header_name_length: int = 0x40
         self.__column_size: int = 136
-        self.__size_position: int = (2 * self.__header_name_length + 2 * struct.calcsize('h')) # h = format code for short
+        self.__size_position: int = (2 * self.__header_name_length + 2 * struct.calcsize('<h')) # h = format code for short
         self.header = IesHeader()
         self.columns: list[IesColumn] = []
         self.rows: list[IesRow] = []
@@ -258,6 +258,7 @@ class XMLTools:
         filename = self.file_name[0: self.file_name.index('.xml')] + ".ies"
         full_path = os.path.join(directory, filename)
         idspace = self.header.id_space
+        keyspace = self.header.key_space if self.header.key_space else ""
         # used for padding
         null_padding_short = self.__get_ushort__(0)
         
@@ -271,7 +272,7 @@ class XMLTools:
             buffer = io.BufferedRandom(raw_f) # type: ignore
             bwt = BinaryWriterTools(buffer)
             bwt.write_fixed_string(idspace, self.__header_name_length)
-            
+            bwt.write_fixed_string(keyspace, self.__header_name_length)
             # According to what I was told the keyspace is deleted and not needed so skipping it
             
             buffer.write(self.__get_ushort__(self.header.Version))

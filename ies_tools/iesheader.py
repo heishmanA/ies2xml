@@ -1,7 +1,7 @@
 class IesHeader:
     def __init__(self):
         self.id_space:str|None = ""
-        self.key_space: str|None = None
+        self.key_space: str|None = ""
         self.Version = 1
         # the following are 'longs' in the original code, but python automatically converts longs to int
         self.info_size: int = 0 # offset of data
