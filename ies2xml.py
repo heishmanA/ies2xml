@@ -58,7 +58,7 @@ def convert_bytestring(bstr: bytes):
     """
     return bytes(
         [(int(b) ^ 0x1) for b in bstr if int(b) != 0]
-        ).decode(encoding='utf-8-sig', errors='replace').rstrip(NULL_BYTE)
+        ).decode(encoding='utf-8', errors='replace').rstrip(NULL_BYTE)
     
 
 
@@ -258,7 +258,7 @@ def convert_file(file: Path, dest = None):
 
     """
     bstr = file.read_bytes()
-    header = bstr[0:128].decode(encoding='utf-8-sig', errors='replace').rstrip(NULL_BYTE)
+    header = bstr[0:128].decode(encoding='utf-8', errors='replace').rstrip(NULL_BYTE)
     header = clean_column_names(header)
     # Equivalent to original `val1`, `offset1`, `offset2`, and `filesize`.
     # I interpreted it as `value`, but I am unsure.
@@ -268,11 +268,13 @@ def convert_file(file: Path, dest = None):
         for i
         in (128, 132, 136, 140)
         ]
-
     if len(bstr) != file_size:
         raise Exception(
             f'IES file {file} has invalid length specified: {len(bstr)}'
             )
+    # Aaron - Note that in xml2ies the value is not -1 here - it's possible that because
+    # I changed the decoding to utf-8-sig that there might be an issue
+    # Apparently the bug is it's looking for the BOM because I decoded it using utf-8-sig
     if value != 1:
         raise Exception(
             f'IES file {file} has incorrect value: {value}'

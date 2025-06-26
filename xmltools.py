@@ -41,13 +41,13 @@ class XMLTools:
     def __get_ushort__(self, val):
         return struct.pack('<H', val)
     def __get_short__(self, val):
-        return struct.pack('h', val)
+        return struct.pack('<h', val)
     def __get_int__(self, val):
         return struct.pack('<i', val)
     def __get_uint_32__(self, val):
         return struct.pack('<I', val)
     def __get_uint_8__(self, val):
-        return struct.pack('Q', val)
+        return struct.pack('<B', val)
     def __get_float__(self, val):
         return struct.pack('<f', val)
     
