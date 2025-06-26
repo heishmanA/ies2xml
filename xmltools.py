@@ -290,7 +290,7 @@ class XMLTools:
             for c in columns:
                 bwt.write_xored_fixed_string(c.column, self.__header_name_length)
                 bwt.write_xored_fixed_string(c.name, self.__header_name_length)
-                buffer.write(self.__get_ushort__(c.column_type.value)) ## Apparently there's a bug here?
+                buffer.write(self.__get_ushort__(c.column_type.value))
                 buffer.write(self.__get_ushort__(c.property_access.value))
                 buffer.write(self.__get_ushort__(c.sync))
                 buffer.write(self.__get_ushort__(c.declaration_index))

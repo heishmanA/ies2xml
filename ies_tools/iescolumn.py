@@ -7,8 +7,8 @@ class IesColumn:
         self.column: str = ""
         self.name: str = ""
         self.column_type: CT = CT.str
-        self.property_access: PA = PA.CP
-        self.sync:bool = False
+        self.property_access: PA = PA.SP
+        self.sync: int = 0
         self.declaration_index: int = 0
     
     def __str__(self)->str:

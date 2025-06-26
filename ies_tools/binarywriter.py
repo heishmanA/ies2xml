@@ -98,7 +98,6 @@ class BinaryWriterTools:
         buffer = self.__encode_str__(output)
         write_length = self.__compare_write_length___(buffer, length)
         
-        
         self.writer.write(buffer[0:write_length])
         
         if (write_length < length):
