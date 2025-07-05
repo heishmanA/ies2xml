@@ -65,7 +65,7 @@ def convert_to_ies(file: Path):
     print(f'Converting {file.name} to {file_name}.ies')
     xml_tool.load_xml(file)
     location = os.path.realpath(os.path.join(os.getcwd(), "ies_out"))
-    if os.path.isdir(location):
+    if not os.path.isdir(location):
         os.mkdir(location)
     xml_tool.create_ies(location)
 

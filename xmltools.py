@@ -152,6 +152,8 @@ class XMLTools:
             return None
         self.tree = ET.parse(file)
         self.file_name = file.name
+        self.__load_xml_columns__()
+        self.__load_xml_rows__()
     
     
     def __load_xml_rows__(self):
@@ -207,8 +209,7 @@ class XMLTools:
         self.header.column_count = len(self.columns)
         self.header.number_of_column_count = sum(column.isNumber() for column in self.columns)
         self.header.number_of_str_column_count = self.header.column_count - self.header.number_of_column_count
-        self.__load_xml_columns__()
-        self.__load_xml_rows__()
+
     
     def __load_xml_columns__(self):
         """Loads the IES column information from the xml
@@ -227,7 +228,7 @@ class XMLTools:
         # Get header information
         self.header.id_space = root.get(self.__ID_SPACE_NAME)
         
-        if (self.header.id_space == None):
+        if (self.header.id_space == None or len(self.header.id_space) == 0):
             print(f'{self.file_name} missing id')
             return None
         self.header.key_space =  root.get(self.__KEY_SPACE_NAME) if root.get(self.__KEY_SPACE_NAME) else None
