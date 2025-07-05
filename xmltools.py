@@ -34,6 +34,16 @@ class XMLTools:
          "CT_": PA.CT,
     }
     
+    def __init__(self):
+        self.__header_name_length: int = 0x40
+        self.__column_size: int = 136
+        self.__size_position: int = (2 * self.__header_name_length + 2 * struct.calcsize('<h')) # h = format code for short
+        self.header = IesHeader()
+        self.columns: list[IesColumn] = []
+        self.rows: list[IesRow] = []
+        self.tree = None
+        self.file_name = ""
+    
     # Each of the following functions were made to
     # simulate the type conversion used in the original C# code
     # each flag represents the respective data type
@@ -109,18 +119,10 @@ class XMLTools:
         """
         return struct.pack('<f', val)
 
+
     
-    def __init__(self):
-        self.__header_name_length: int = 0x40
-        self.__column_size: int = 136
-        self.__size_position: int = (2 * self.__header_name_length + 2 * struct.calcsize('<h')) # h = format code for short
-        self.header = IesHeader()
-        self.columns: list[IesColumn] = []
-        self.rows: list[IesRow] = []
-        self.tree = None
-        self.file_name = ""
     
-    def is_value_numeric(self, value: str) -> bool:
+    def __is_value_numeric__(self, value: str) -> bool:
         """Verify if the given value is number
 
         Args:
@@ -151,7 +153,8 @@ class XMLTools:
         self.tree = ET.parse(file)
         self.file_name = file.name
     
-    def load_xml_rows(self):
+    
+    def __load_xml_rows__(self):
         """ Loads the IES row information from the xml file
         """
         self.rows.clear()
@@ -186,7 +189,7 @@ class XMLTools:
                         row.user_scr_dict[key] = False
                 else:
                     if column.isNumber():
-                        if self.is_value_numeric(attribute) == False:
+                        if self.__is_value_numeric__(attribute) == False:
                             print(f'There was an error in this file where expected value should be numeric. Key = {key} - Need to figure out how to display the lines')
                             exit()
                         row[key] = float(attribute)
@@ -204,8 +207,10 @@ class XMLTools:
         self.header.column_count = len(self.columns)
         self.header.number_of_column_count = sum(column.isNumber() for column in self.columns)
         self.header.number_of_str_column_count = self.header.column_count - self.header.number_of_column_count
+        self.__load_xml_columns__()
+        self.__load_xml_rows__()
     
-    def load_xml_columns(self):
+    def __load_xml_columns__(self):
         """Loads the IES column information from the xml
 
         Args:
@@ -310,6 +315,11 @@ class XMLTools:
         
         
     def create_ies(self, directory: str):
+        """Creates the ies file and saves it to the specified directory
+
+        Args:
+            directory (str): _description_
+        """
         columns = self.columns
         # This simulates the C# LINQ sort from the original C# implementation
         # First sort the columns by whether they are a number, then by their declaration index
@@ -362,7 +372,7 @@ class XMLTools:
                 buffer.write(self.__get_ushort__(c.declaration_index))
             # end loop
             rows_start = buffer.tell()
-            cols = [c.name for c in sorted_columns]
+            
 
             # This must where my error is
             for row in rows:
@@ -401,13 +411,3 @@ class XMLTools:
             buffer.write(self.__get_uint_32__(self.header.total_size))
             buffer.flush()
             buffer.seek(0, io.SEEK_END)
-            
-            
-# Testing for debugging
-xml = XMLTools()
-file_path = 'xml_files/tpitem.xml'
-p = Path(file_path)
-xml.load_xml(p)
-xml.load_xml_columns()
-xml.load_xml_rows()
-xml.create_ies('out')

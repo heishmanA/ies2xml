@@ -64,8 +64,6 @@ def convert_to_ies(file: Path, dest: Path|None = None):
     file_name = file.name[0: len(file.name) - 4]
     print(f'Converting {file.name} to {file_name}.ies')
     xml_tool.load_xml(file)
-    xml_tool.load_xml_columns()
-    xml_tool.load_xml_rows()
     # test
     location = os.path.realpath(os.path.join(os.getcwd(), "out"))
     xml_tool.create_ies(location)
