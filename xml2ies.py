@@ -54,8 +54,8 @@ def verify_is_dir(dir: Path) -> bool:
     """
     return os.path.isdir(dir)
 
-def convert_to_ies(file: Path, dest: Path|None = None):
-    """Converts a single xml file to ies format
+def convert_to_ies(file: Path):
+    """Converts a single xml file to ies format - Creates a folder named "ies_out" in the same directory as xml2ies.py
 
     Args:
         file (Path): the file to convert
@@ -64,8 +64,9 @@ def convert_to_ies(file: Path, dest: Path|None = None):
     file_name = file.name[0: len(file.name) - 4]
     print(f'Converting {file.name} to {file_name}.ies')
     xml_tool.load_xml(file)
-    # test
-    location = os.path.realpath(os.path.join(os.getcwd(), "out"))
+    location = os.path.realpath(os.path.join(os.getcwd(), "ies_out"))
+    if os.path.isdir(location):
+        os.mkdir(location)
     xml_tool.create_ies(location)
 
 def batch_convert_to_ies(directory: Path):
@@ -90,6 +91,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     print(f'The subcommand chosen: {args.subcommand}')
     if args.subcommand == 'file':
-        convert_to_ies(args.xml_file, args.output)
+        convert_to_ies(args.xml_file)
     else:
         batch_convert_to_ies(args.directory)

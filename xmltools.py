@@ -320,23 +320,23 @@ class XMLTools:
         Args:
             directory (str): _description_
         """
+        
+        # used for padding
+        null_padding_short = self.__get_ushort__(0)
+        filename = self.file_name[0: self.file_name.index('.xml')] + ".ies"
+        full_path = os.path.join(directory, filename)
+        idspace = self.header.id_space
+        keyspace = self.header.key_space if self.header.key_space else ""
         columns = self.columns
-        # This simulates the C# LINQ sort from the original C# implementation
-        # First sort the columns by whether they are a number, then by their declaration index
-        sorted_columns = sorted(columns, key=lambda column: (0 if column.isNumber() else 1, column.declaration_index))
-
         rows = self.rows
         row_count = len(rows)
         column_count = len(columns)
         number_of_column_count = sum(column.isNumber() for column in columns)
         string_column_count = column_count - number_of_column_count
+        # This simulates the C# LINQ sort from the original C# implementation
+        # First sort the columns by whether they are a number, then by their declaration index
+        sorted_columns = sorted(columns, key=lambda column: (0 if column.isNumber() else 1, column.declaration_index))
         
-        filename = self.file_name[0: self.file_name.index('.xml')] + ".ies"
-        full_path = os.path.join(directory, filename)
-        idspace = self.header.id_space
-        keyspace = self.header.key_space if self.header.key_space else ""
-        # used for padding
-        null_padding_short = self.__get_ushort__(0)
         
         if idspace == None or len(idspace) == 0:
             # id space should not be missing
