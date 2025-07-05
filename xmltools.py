@@ -1,5 +1,4 @@
 import xml.etree.ElementTree as ET
-import numpy as np
 import struct
 import os
 import io
@@ -39,17 +38,77 @@ class XMLTools:
     # simulate the type conversion used in the original C# code
     # each flag represents the respective data type
     def __get_ushort__(self, val):
+        """
+        Packs the given value as an unsigned short (2 bytes) in little-endian format.
+        
+        Args:
+            val (int): The value to encode.
+        
+        Returns:
+            bytes: A 2-byte little-endian representation of the unsigned short.
+        """
         return struct.pack('<H', val)
+
     def __get_short__(self, val):
+        """
+        Packs the given value as a signed short (2 bytes) in little-endian format.
+
+        Args:
+            val (int): The value to encode.
+
+        Returns:
+            bytes: A 2-byte little-endian representation of the signed short.
+        """
         return struct.pack('<h', val)
+
     def __get_int__(self, val):
+        """
+        Packs the given value as a signed integer (4 bytes) in little-endian format.
+
+        Args:
+            val (int): The integer value to encode.
+
+        Returns:
+            bytes: A 4-byte little-endian representation of the signed integer.
+        """
         return struct.pack('<i', val)
+
     def __get_uint_32__(self, val):
+        """
+        Packs the given value as an unsigned 32-bit integer (4 bytes) in little-endian format.
+
+        Args:
+            val (int): The value to encode.
+
+        Returns:
+            bytes: A 4-byte little-endian representation of the unsigned integer.
+        """
         return struct.pack('<I', val)
+
     def __get_uint_8__(self, val):
+        """
+        Packs the given value as an unsigned 8-bit integer (1 byte).
+
+        Args:
+            val (int): The value to encode (must be between 0 and 255).
+
+        Returns:
+            bytes: A 1-byte representation of the unsigned 8-bit value.
+        """
         return struct.pack('<B', val)
+
     def __get_float__(self, val):
+        """
+        Packs the given value as a 32-bit floating point number (4 bytes) in little-endian format.
+
+        Args:
+            val (float): The float value to encode.
+
+        Returns:
+            bytes: A 4-byte little-endian representation of the float.
+        """
         return struct.pack('<f', val)
+
     
     def __init__(self):
         self.__header_name_length: int = 0x40
@@ -233,6 +292,12 @@ class XMLTools:
                 column.property_access = access
                 column.sync = sync
                 
+                if column.isNumber():
+                    column.declaration_index = sum(c.isNumber() for c in self.columns)
+                    
+                else:
+                    column.declaration_index = sum(not c.isNumber() for c in self.columns)
+                
                 if property_name == self.__CLASS_ID:
                     self.header.use_class_id = True
                 
@@ -248,7 +313,8 @@ class XMLTools:
         columns = self.columns
         # This simulates the C# LINQ sort from the original C# implementation
         # First sort the columns by whether they are a number, then by their declaration index
-        sorted_columns = sorted(columns, key=lambda column: (0 if column.isNumber() else 1, column.declaration_index))     
+        sorted_columns = sorted(columns, key=lambda column: (0 if column.isNumber() else 1, column.declaration_index))
+
         rows = self.rows
         row_count = len(rows)
         column_count = len(columns)
@@ -281,13 +347,12 @@ class XMLTools:
             buffer.write(self.__get_uint_32__(self.header.data_size))
             buffer.write(self.__get_uint_32__(self.header.total_size))
             buffer.write(self.__get_uint_8__(1)  if self.header.use_class_id == True else self.__get_uint_8__(0))
-            buffer.write(null_padding_short)
+            buffer.write(self.__get_uint_8__(0))
             buffer.write(self.__get_ushort__(row_count))
             buffer.write(self.__get_ushort__(column_count))
             buffer.write(self.__get_ushort__(number_of_column_count))
             buffer.write(self.__get_ushort__(string_column_count))
             buffer.write(null_padding_short)
-            
             for c in columns:
                 bwt.write_xored_fixed_string(c.column, self.__header_name_length)
                 bwt.write_xored_fixed_string(c.name, self.__header_name_length)
@@ -296,46 +361,53 @@ class XMLTools:
                 buffer.write(self.__get_ushort__(c.sync))
                 buffer.write(self.__get_ushort__(c.declaration_index))
             # end loop
-            
             rows_start = buffer.tell()
-            
+            cols = [c.name for c in sorted_columns]
+
+            # This must where my error is
             for row in rows:
                 buffer.write(self.__get_int__(row.class_id))
                 bwt.write_xor_lp_str(row.class_name)
                 
                 for c in sorted_columns:
-                    ies_row = row.get(c.name)
-                    
-                    if ies_row == None:
+
+                    value = row[c.name]
+                    if value is None:
                         if c.isNumber():
                             buffer.write(self.__get_float__(0))
                         else:
                             buffer.write(self.__get_ushort__(0))
                     else:
                         if c.isNumber():
-                            buffer.write(self.__get_float__(float(ies_row))) # type: ignore
+                            buffer.write(self.__get_float__(value)) # type: ignore
                         else:
-                            bwt.write_xor_lp_str(str(ies_row))
+                            bwt.write_xor_lp_str(str(value))
                 # end sorted loop
                 # Iterating over all the columns where the column is not a number
-                for c in [c for c in sorted_columns if c.isNumber() == False]:
+                
+                for c in [col for col in sorted_columns if col.isNumber() == False]:
                     val = row.user_scr_dict.get(c.name)
-                    # Writes the unisgned int for True 
-                    # if the key exists in dictionary and its value is true
-                    # else
-                    # Writes the unsigned int for False 
-                    # if the key exists in the dictionary and its values is false 
-                    # or the key does not exist in the dictionary
+                    
+                    # This handles both when user scr is true or false and when user scr is none (not found in dict)
                     buffer.write(self.__get_uint_8__(1) if val is True else self.__get_uint_8__(0))
                 # end loop
             # end loop
             self.header.info_size = column_count * self.__column_size
             self.header.data_size = buffer.tell() - rows_start
             self.header.total_size = buffer.tell()
-            
             buffer.seek(self.__size_position)
             buffer.write(self.__get_uint_32__(self.header.info_size))
             buffer.write(self.__get_uint_32__(self.header.data_size))
             buffer.write(self.__get_uint_32__(self.header.total_size))
             buffer.flush()
             buffer.seek(0, io.SEEK_END)
+            
+            
+# Testing for debugging
+xml = XMLTools()
+file_path = 'xml_files/tpitem.xml'
+p = Path(file_path)
+xml.load_xml(p)
+xml.load_xml_columns()
+xml.load_xml_rows()
+xml.create_ies('out')

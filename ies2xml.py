@@ -6,6 +6,7 @@ import re
 from pathlib import Path
 from xml.etree.ElementTree import Element, SubElement, ElementTree, tostring
 from xml.dom.minidom import parseString
+from tqdm import tqdm
 
 parser = argparse.ArgumentParser(
     description = 'An .ies file to xml converter'
@@ -88,7 +89,8 @@ def clean_column_names(name: str) -> str:
     # matching any non-korean values that get included 
     match = re.match(r'^[A-Za-z0-9_]+', name)
     return match.group(0) if match else name.strip()
-
+    
+    
 def get_col_names(
     file: Path, bstr: bytes, ncols: int, offset: int, ncols_int: int
     ):
@@ -110,9 +112,11 @@ def get_col_names(
     """
     col_names = {}
     for _ in range(ncols):
+        #bstr_str = bstr[offset:offset+64]
         col_name = convert_bytestring(bstr[offset:offset+64])
        
-        col_name = clean_column_names(col_name)
+        # col_name = clean_column_names(col_name)
+        #print(f'The byte string = {bstr_str}\nThe total Size = {len(bstr_str)}\nCol name = {col_name}')
         
         # `n2` is unnecessary in this port.
         # Just add 128; 64 for 64 bytes + 64 for `n2`.
@@ -123,7 +127,6 @@ def get_col_names(
         offset += 6
         col_idx = get_int_from_bytes(bstr[offset:offset+2])
         offset += 2
-
         if col_type == 0:
             try:
                 if col_names[col_idx]:
@@ -142,7 +145,7 @@ def get_col_names(
                         )
             except KeyError:
                 col_names[col_idx + ncols_int] = col_name
-
+    
     return col_names
 
 
@@ -333,7 +336,9 @@ def convert_file(file: Path, dest = None):
     #     )
     
     # new path with xml data type
-    out_path = Path(f'{file.stem}.xml' if dest is None else dest)
+    location = os.path.join(os.getcwd(), "xml_files")
+    # out_path = Path(f'{file.stem}.xml' if dest is None else dest)
+    out_path = Path(f'{location}/{file.stem}.xml')
     # pretty print the xml file
     pretty_print_xml(tsv, header, out_path)
 
@@ -351,7 +356,12 @@ def batch_convert_dir(directory: Path):
         None
 
     """
-    for file in directory.glob('*.ies'):
+    
+    ies_files = list(directory.glob('*.ies'))
+    total_files = len(ies_files)
+    print(f'Found {total_files} ies files')
+    
+    for file in tqdm(ies_files, desc='Converting .ies files to .xml', unit='file'):
         try:
             convert_file(file)
         except Exception as e:
@@ -360,6 +370,14 @@ def batch_convert_dir(directory: Path):
                 {file} was subsequently skipped."""
                 )
 
+    # for file in directory.glob('*.ies'):
+        # try:
+        #     convert_file(file)
+        # except Exception as e:
+        #     print(
+        #         f"""Exception caught: {e}'
+        #         {file} was subsequently skipped."""
+        #         )
     return
 
 

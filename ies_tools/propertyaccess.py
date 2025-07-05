@@ -1,8 +1,8 @@
 from enum import Enum
 
 class PropertyAccess(Enum):
-    EP = 1
-    CP = 2
-    VP = 3
-    SP = 4
-    CT = 5
+    EP = 0
+    CP = 1
+    VP = 2
+    SP = 3
+    CT = 4
