@@ -7,6 +7,11 @@ class BinaryWriterTools:
     __XOR_KEY: int = 1
     __NULL_BYTE = b'\x00'
     def __init__(self, writer: io.BufferedRandom):
+        """ A simple tool to easily utilize writing fixed size strings, xored strings or fixed size xored strings
+
+        Args:
+            writer (io.BufferedRandom): The buffer used to write to file
+        """
         self.writer = writer
     
     def __encode_str__(self, value: str, max_bytes:int = -1) -> bytes:

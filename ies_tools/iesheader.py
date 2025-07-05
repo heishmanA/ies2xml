@@ -1,5 +1,7 @@
 class IesHeader:
     def __init__(self):
+        """Represents the header for the IES file
+        """
         self.id_space:str|None = ""
         self.key_space: str|None = ""
         self.Version = 1
@@ -14,4 +16,7 @@ class IesHeader:
         self.number_of_str_column_count = 0 # the number of string columns
         
     def increase_row_count(self):
+        """
+            increases the row count of this - kind of redundant, but was having an issue trying to update row count
+        """
         self.row_count += 1

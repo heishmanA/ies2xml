@@ -374,7 +374,6 @@ class XMLTools:
             rows_start = buffer.tell()
             
 
-            # This must where my error is
             for row in rows:
                 buffer.write(self.__get_int__(row.class_id))
                 bwt.write_xor_lp_str(row.class_name)
@@ -394,12 +393,11 @@ class XMLTools:
                             bwt.write_xor_lp_str(str(value))
                 # end sorted loop
                 # Iterating over all the columns where the column is not a number
-                
                 for c in [col for col in sorted_columns if col.isNumber() == False]:
                     val = row.user_scr_dict.get(c.name)
                     
                     # This handles both when user scr is true or false and when user scr is none (not found in dict)
-                    buffer.write(self.__get_uint_8__(1) if val is True else self.__get_uint_8__(0))
+                    buffer.write(self.__get_uint_8__(1) if val is True else self.__get_uint_8__(0)) 
                 # end loop
             # end loop
             self.header.info_size = column_count * self.__column_size
