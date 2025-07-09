@@ -336,9 +336,14 @@ def convert_file(file: Path, dest = None):
     #     )
     
     # new path with xml data type
-    location = os.path.join(os.getcwd(), "xml_files")
+    location = os.path.join(os.getcwd(), "xml_files") if dest is None else dest
+    if not os.path.isdir(location):
+        os.mkdir(location)
+        
     # out_path = Path(f'{file.stem}.xml' if dest is None else dest)
-    out_path = Path(f'{location}/{file.stem}.xml')
+    out_path = Path(f'{location}/{file.stem}.xml') if dest is None else dest
+    
+        
     # pretty print the xml file
     pretty_print_xml(tsv, header, out_path)
 
