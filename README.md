@@ -97,6 +97,7 @@ This code was designed with the following:
  
  - Python 3.5+
  - [tqdm][tqdm] a library for displaying a progress bar. 
+  - $pip install tqdm
 
 ## Disclaimer
 
