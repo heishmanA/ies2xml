@@ -96,10 +96,11 @@ Please refer to Please refer to the `IES2TSVCHANGELOG.md` and `IES2TSVREADME.md`
 This code was designed with the following:
  
  - Python 3.5+
- - `tqdm` a library for displaying a progress bar. [tqdm](https://tqdm.github.io/)
+ - [tqdm][tqdm] a library for displaying a progress bar. 
 
 ## Disclaimer
 
 This project is not affiliated with or endorsed by [Tree of Savior][tos]. See [`LICENSE`](LICENSE) for more detail.
 
 [tos]: https://treeofsavior.com/
+[tqdm]: https://tqdm.github.io/
